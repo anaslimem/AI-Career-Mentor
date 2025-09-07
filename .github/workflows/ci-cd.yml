@@ -106,8 +106,6 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          sed -i "s|:latest|:${{ github.sha }}|g" k8s/backend-deployment.yaml
-          sed -i "s|:latest|:${{ github.sha }}|g" k8s/frontend-deployment.yaml
           kubectl apply -f k8s/
           kubectl wait --for=condition=available --timeout=300s deployment --all
 
