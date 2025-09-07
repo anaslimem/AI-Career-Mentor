@@ -19,7 +19,7 @@ jobs:
     # Install dependencies (can be removed if not needed)
     - name: Install dependencies
       run: |
-        cd backend
+        cd app/backend
         pip install -r requirements.txt
     # Log in to Docker Hub
     - name: Docker login
