@@ -1,4 +1,3 @@
-# Solution 1: Updated CI/CD with Space Management
 name: CI/CD Pipeline
 
 on:
@@ -10,7 +9,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,14 +29,9 @@ jobs:
       # Additional manual cleanup
       - name: Clean up system
         run: |
-          # Remove unnecessary packages
           sudo apt-get clean
           sudo apt-get autoremove -y
-          
-          # Clear Docker cache
           docker system prune -af --volumes
-          
-          # Show available space
           df -h
           echo "Available disk space after cleanup:"
           df -h /
@@ -72,11 +66,10 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-backend:${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha
-          cache-to: type=gha,mode=min  # Reduced cache to save space
+          cache-to: type=gha,mode=min
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
-      # Clean up between builds
       - name: Clean Docker cache between builds
         run: |
           docker system prune -f
@@ -97,18 +90,43 @@ jobs:
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
-      # Rest of your deployment steps...
-      - name: Set up Minikube
+      # Set up Minikube
+      - name: Stop Minikube
+        run: minikube stop || true
+      - name: Start Minikube
         uses: medyagh/setup-minikube@master
         with:
           minikube-version: 1.32.0
           kubernetes-version: 1.28.3
 
+      # Clean up old deployments and services
+      - name: Cleanup old deployments
+        run: |
+          kubectl delete deployment career-mentor-backend --ignore-not-found
+          kubectl delete deployment career-mentor-frontend --ignore-not-found
+          kubectl delete service career-mentor-backend --ignore-not-found
+          kubectl delete service career-mentor-frontend --ignore-not-found
+
+      # Ensure Tavily secret exists
+      - name: Create/Update Tavily Secret
+        run: |
+          kubectl delete secret tavily-secret --ignore-not-found
+          kubectl create secret generic tavily-secret --from-literal=TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }}
+
+      # Deploy to Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/
           kubectl rollout status deployment/career-mentor-backend --timeout=1000s
           kubectl rollout status deployment/career-mentor-frontend --timeout=1000s
+
+      # Debugging: Get pod status and logs if rollout fails
+      - name: Get pod status and logs if rollout fails
+        if: failure()
+        run: |
+          kubectl get pods -A
+          kubectl describe deployment career-mentor-backend
+          kubectl logs $(kubectl get pods -l app=career-mentor-backend -o jsonpath="{.items[0].metadata.name}")
 
       # Final cleanup
       - name: Final cleanup
