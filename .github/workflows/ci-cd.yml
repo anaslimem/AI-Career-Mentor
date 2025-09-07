@@ -1,3 +1,4 @@
+# Solution 1: Updated CI/CD with Space Management
 name: CI/CD Pipeline
 
 on:
@@ -11,41 +12,56 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Python
+      # Free up disk space BEFORE building
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      # Additional manual cleanup
+      - name: Clean up system
+        run: |
+          # Remove unnecessary packages
+          sudo apt-get clean
+          sudo apt-get autoremove -y
+          
+          # Clear Docker cache
+          docker system prune -af --volumes
+          
+          # Show available space
+          df -h
+          echo "Available disk space after cleanup:"
+          df -h /
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      # Install dependencies (if needed for testing)
-      - name: Install dependencies
-        run: |
-          cd app/backend
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # Run tests (optional but recommended)
-      - name: Run tests
-        run: |
-          cd app/backend
-          # pytest tests/ || echo "No tests found"
-
-      # Set up Docker Buildx for multi-platform builds
+      # Set up Docker Buildx with limited cache
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:buildx-stable-1
+            network=host
 
-      # Login to Docker Hub
       - name: Docker login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build and push backend image
+      # Build backend with optimized settings
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
@@ -56,9 +72,17 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-backend:${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min  # Reduced cache to save space
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
-      # Build and push frontend image
+      # Clean up between builds
+      - name: Clean Docker cache between builds
+        run: |
+          docker system prune -f
+          df -h
+
+      # Build frontend with optimized settings
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
@@ -66,62 +90,30 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-frontend:latest
-            ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-frontend:${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
-      # Set up Minikube
+      # Rest of your deployment steps...
       - name: Set up Minikube
         uses: medyagh/setup-minikube@master
         with:
           minikube-version: 1.32.0
           kubernetes-version: 1.28.3
 
-      # Wait for Minikube to be ready
-      - name: Wait for Minikube
-        run: |
-          minikube status
-          kubectl cluster-info
-
-      # Update image pull policy for development
-      - name: Configure Minikube for local images
-        run: |
-          eval $(minikube docker-env)
-          minikube addons enable ingress
-
-      # Deploy to Kubernetes
       - name: Deploy to Kubernetes
         run: |
-          # Replace image tags with commit SHA for proper deployment
           sed -i "s|:latest|:${{ github.sha }}|g" k8s/backend-deployment.yaml
           sed -i "s|:latest|:${{ github.sha }}|g" k8s/frontend-deployment.yaml
-          
-          # Apply configurations
           kubectl apply -f k8s/
-          
-          # Wait for deployments to be ready
           kubectl wait --for=condition=available --timeout=300s deployment --all
 
-      # Verify deployment
-      - name: Verify Deployment
+      # Final cleanup
+      - name: Final cleanup
+        if: always()
         run: |
-          echo "=== Checking Deployments ==="
-          kubectl get deployments
-          
-          echo "=== Checking Pods ==="
-          kubectl get pods -o wide
-          
-          echo "=== Checking Services ==="
-          kubectl get services
-          
-          echo "=== Pod Logs (Backend) ==="
-          kubectl logs -l app=ai-career-mentor-backend --tail=20 || echo "Backend not ready yet"
-          
-          echo "=== Pod Logs (Frontend) ==="
-          kubectl logs -l app=ai-career-mentor-frontend --tail=20 || echo "Frontend not ready yet"
-
-      # Clean up (optional)
-      - name: Clean up old images
-        run: |
-          docker system prune -f
+          docker system prune -af --volumes
+          df -h
