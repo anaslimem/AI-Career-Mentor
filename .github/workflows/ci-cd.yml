@@ -33,7 +33,7 @@ jobs:
       with:
         context: ./app/backend
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/AI-Career-Mentor-backend:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-backend:latest
 
     # Build and push frontend image
     - name: Build and Push Frontend
@@ -41,7 +41,7 @@ jobs:
       with:
         context: ./app/frontend
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/AI-Career-Mentor-frontend:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/ai-career-mentor-frontend:latest
 
     # Start Minikube (runs Kubernetes cluster inside CI runner)
     - name: Set up Minikube
