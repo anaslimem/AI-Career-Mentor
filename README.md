@@ -140,39 +140,6 @@ kubectl apply -f k8s/
 kubectl get pods -n ai-career-mentor
 ```
 
-📁 Project Structure
---------------------
-
-AI-Career-Mentor/   
-
-├── app
-│   ├── backend
-│   │   ├── chroma_db
-│   │   ├── __init__.py
-│   │   ├── agent.py
-│   │   ├── app.py
-│   │   ├── chunker.py
-│   │   ├── comparator.py
-│   │   ├── cv_parser.py
-│   │   ├── Dockerfile
-│   │   ├── job_parser.py
-│   │   ├── requirements.txt
-│   │   └── vectorstore.py
-├── frontend
-│   ├── Dockerfile
-│   └── main.py
-├── k8s
-│   ├── backend-deployment.yaml
-│   └── frontend-deployment.yaml
-├── .env
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-├── architecture.png
-├── flow.md
-└── README.md
-
-
 🏛️ Architecture Details
 ------------------------
 
