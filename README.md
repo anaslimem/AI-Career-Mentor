@@ -169,14 +169,3 @@ Contributions, issues, and feature requests are welcome!Follow these steps:
     
 5.  Open a Pull Request
     
-
-🙏 Acknowledgments
-------------------
-
-*   [PyMuPDF](https://pymupdf.readthedocs.io/) – PDF processing
-    
-*   [Tavily](https://tavily.com/) – AI-powered job search
-    
-*   [Ollama](https://ollama.ai/) – Local LLM inference
-    
-*   [Chonkie](https://github.com/chonkie-ai/chonkie) – Text chunking
