@@ -154,7 +154,7 @@ kubectl get pods -n ai-career-mentor
 *   **Containerization & Orchestration**: Docker and Kubernetes for scalable, production-ready deployments.
     
 
-🤝 Contributing
+🤝 Contributing 
 ---------------
 
 Contributions, issues, and feature requests are welcome!Follow these steps:
