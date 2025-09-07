@@ -107,8 +107,8 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/
-          kubectl rollout status deployment/career-mentor-backend --timeout=600s
-          kubectl rollout status deployment/career-mentor-frontend --timeout=600sl
+          kubectl rollout status deployment/career-mentor-backend --timeout=1000s
+          kubectl rollout status deployment/career-mentor-frontend --timeout=1000s
 
       # Final cleanup
       - name: Final cleanup
