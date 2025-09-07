@@ -1,0 +1,15 @@
+fastapi
+streamlit
+requests
+PyMuPDF
+beautifulsoup4
+langchain
+langchain-community
+tavily-python
+chromadb
+sentence-transformers
+chonkie
+python-multipart
+ollama
+langchain_huggingface
+langchain-ollama

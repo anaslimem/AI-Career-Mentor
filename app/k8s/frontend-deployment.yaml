@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: career-mentor-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: career-mentor-frontend
+  template:
+    metadata:
+      labels:
+        app: career-mentor-frontend
+    spec:
+      containers:
+        - name: frontend
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "400m"
+              memory: "512Mi"
+
+          image: limemanas/career-mentor-frontend:latest
+          ports:
+            - containerPort: 8501
+          env:
+            - name: API_URL
+              value: "http://career-mentor-backend:8000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: career-mentor-frontend
+spec:
+  selector:
+    app: career-mentor-frontend
+  ports:
+    - protocol: TCP
+      port: 8501
+      targetPort: 8501
+  type: LoadBalancer
