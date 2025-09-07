@@ -1,0 +1,61 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout repo
+    - name: Checkout code
+      uses: actions/checkout@v3
+    # Set up Python (optional for dependencies in future)
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    # Install dependencies (can be removed if not needed)
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+    # Log in to Docker Hub
+    - name: Docker login
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    # Build and push backend image
+    - name: Build and Push Backend
+      uses: docker/build-push-action@v4
+      with:
+        context: ./app/backend
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/AI-Career-Mentor-backend:latest
+
+    # Build and push frontend image
+    - name: Build and Push Frontend
+      uses: docker/build-push-action@v4
+      with:
+        context: ./app/frontend
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/AI-Career-Mentor-frontend:latest
+
+    # Start Minikube (runs Kubernetes cluster inside CI runner)
+    - name: Set up Minikube
+      uses: medyagh/setup-minikube@master
+
+    # Verify Minikube
+    - name: Verify Minikube
+      run: kubectl get nodes
+
+    # Deploy to Kubernetes inside Minikube
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/backend-deployment.yaml
+        kubectl apply -f k8s/frontend-deployment.yaml
+    # Check pods after deployment
+    - name: Check Kubernetes Pods
+      run: kubectl get pods --namespace=default
