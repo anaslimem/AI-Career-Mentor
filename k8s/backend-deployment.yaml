@@ -25,12 +25,17 @@ spec:
           ports:
             - containerPort: 8000
           env:
+            - name: TAVILY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tavily-secret   
+                  key: TAVILY_API_KEY  
             - name: PORT
               value: "8000"
             - name: API_URL
               value: "http://career-mentor-backend:8000"
             - name: OLLAMA_HOST
-              value: "http://ollama:11434"   
+              value: "http://ollama:11434"
 ---
 apiVersion: v1
 kind: Service
