@@ -66,9 +66,8 @@ jobs:
       # Deploy to Kubernetes
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f k8s/
-          kubectl rollout status deployment/career-mentor-backend --timeout=300s
-          kubectl rollout status deployment/career-mentor-frontend --timeout=300s
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml
 
       # Debugging: Get pod status and logs if rollout fails
       - name: Get pod status and logs if rollout fails
